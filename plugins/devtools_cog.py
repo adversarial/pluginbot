@@ -46,7 +46,7 @@ class DevCog(commands.Cog):
     @commands.command(name='status', hidden = True)
     @commands.is_owner()
     async def status(self, ctx):
-        await ctx.channel.send(self._status_string())
+        await ctx.channel.send(await self._status_string())
 
     # globalsync ( )
     # sync all slash commands (may take up to 24 hours to propogate)
@@ -174,7 +174,7 @@ class DevCog(commands.Cog):
         raise NotImplementedError
     
     async def _handle_status(self, interaction: discord.Interaction):
-        interaction.response.send_message(self._status_string())
+        interaction.response.send_message(await self._status_string())
 
     snappy_group = app_commands.Group(name="snappy", description="Settings for snappy")
 
