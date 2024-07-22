@@ -283,7 +283,8 @@ class markov_brain:
             if not result:
                 raise KeyError
         return result[0][0]
-    
+
+    # because all seeds are unique and don't store a count this isn't an actual markov chain function
     async def get_previous_state(self, seed, forward_seed, seperator):
 
         QUERY_GUESS_PREVIOUS_SEED = (
@@ -296,20 +297,8 @@ class markov_brain:
             'ORDER BY random() '
             'LIMIT 1;'
         )
-        #QUERY_FILTER_PREVIOUS_SEEDS = (
-        #    f'SELECT EXISTS(SELECT seed FROM "{self.seed_table.name}" '
-        #    f'WHERE EXISTS(SELECT next_state FROM "{self.next_state_table.name}" '
-        ##                  'WHERE next_state = ? '
-        #                 f'AND seed_id = (SELECT DISTINCT rowid FROM "{self.seed_table.name}" WHERE seed = ?)));' 
-        #)
 
         results = await self._execute_read(self.database, QUERY_GUESS_PREVIOUS_SEED, ('%_' + seperator + seed, forward_seed))
         if not results:
             raise KeyError
         return results[0][1]
-        #if results:
-        #    for item in results:
-        #        if (await self._execute_read(self.database, QUERY_FILTER_PREVIOUS_SEEDS, (forward_seed, item[0])))[0][0]:
-        #            return item[0]
-        #raise KeyError
-    
