@@ -127,17 +127,19 @@ class markov:
     async def generate_reverse_message(self, seed, max_words = 10):
         # drop last word of key
         # [ 'brown fox' ] [ 'brown' ] -> [ 'quick brown' ]
+        forward_seed = seed.split()[-1]
         prompt = self.SEPERATOR.join(seed.split()[:self.chain_length - 1])
         message = deque()
         for _ in range(max_words or self.MAX_OUTPUT_WORDS):
             # Drop last word of key and try to find matching keys
             # [ 'lazy dog' ] -> [ 'lazy' ] -> [ 'the lazy' ]
             try:
-                prev_seed = await self.brain.get_previous_state(prompt, self.SEPERATOR)
+                prev_seed = await self.brain.get_previous_state(prompt, forward_seed, self.SEPERATOR)
             except KeyError:
                 break
             if prev_seed == prompt: # due to no terminal at beginning this may loop infinitely, todo?
                 break
+            forward_seed = prev_seed.split()[-1]
             prev_state = prev_seed.split()[:self.chain_length - 1]
             message.appendleft(' '.join(prev_state))
             prompt = self.SEPERATOR.join(prev_state)

@@ -284,19 +284,32 @@ class markov_brain:
                 raise KeyError
         return result[0][0]
     
-    async def get_previous_state(self, seed, seperator):
-        QUERY_GET_PREVIOUS_STATE = (
-            f'SELECT next_state, count FROM "{self.next_state_table.name}" '
-            f'WHERE seed_id = (SELECT DISTINCT rowid FROM "{self.seed_table.name} WHERE seed LIKE ? ORDER BY random() LIMIT 1;" '
-             'ORDER BY random() LIMIT 1'
-        )
+    async def get_previous_state(self, seed, forward_seed, seperator):
 
         QUERY_GUESS_PREVIOUS_SEED = (
-            f'SELECT seed FROM "{self.seed_table.name}" WHERE seed LIKE ? ORDER BY random() LIMIT 1;'
+           f'SELECT rowid, seed FROM "{self.seed_table.name}" '
+            'WHERE seed LIKE ? '
+            'AND EXISTS(SELECT next_state '
+                       f'FROM "{self.next_state_table.name}" '
+                        'WHERE next_state = ? '
+                        'AND seed_id = rowid) '
+            'ORDER BY random() '
+            'LIMIT 1;'
         )
+        #QUERY_FILTER_PREVIOUS_SEEDS = (
+        #    f'SELECT EXISTS(SELECT seed FROM "{self.seed_table.name}" '
+        #    f'WHERE EXISTS(SELECT next_state FROM "{self.next_state_table.name}" '
+        ##                  'WHERE next_state = ? '
+        #                 f'AND seed_id = (SELECT DISTINCT rowid FROM "{self.seed_table.name}" WHERE seed = ?)));' 
+        #)
 
-        result = await self._execute_read(self.database, QUERY_GUESS_PREVIOUS_SEED, ('%_' + seperator + seed,))
-        if not result:
+        results = await self._execute_read(self.database, QUERY_GUESS_PREVIOUS_SEED, ('%_' + seperator + seed, forward_seed))
+        if not results:
             raise KeyError
-        return result[0][0]
+        return results[0][1]
+        #if results:
+        #    for item in results:
+        #        if (await self._execute_read(self.database, QUERY_FILTER_PREVIOUS_SEEDS, (forward_seed, item[0])))[0][0]:
+        #            return item[0]
+        #raise KeyError
     
